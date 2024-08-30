@@ -1,5 +1,3 @@
-from lxml.parser import filename
-
 from cellspot.spot_finder import SpotFinder
 
 from pathlib import Path

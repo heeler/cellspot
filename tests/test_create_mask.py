@@ -5,7 +5,7 @@ from pathlib import Path
 from attr import dataclass
 
 from .conftest import LOCAL_RESOURCES_DIR
-from cellspot.scripts.create_mask import main
+from cellspot.scripts.create_mask import main_with_args
 
 RED_THRESH = 82  # 82
 CLIP_LOW = 5
@@ -35,7 +35,7 @@ class ExpectedResult():
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_001.tif", output_folder=LOCAL_RESOURCES_DIR,
               clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
      ExpectedResult(cells=459, cells_with_inclusions=144, tolerance=0.1)
-    ),  # passing
+    )  # passing
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_002.tif", output_folder=LOCAL_RESOURCES_DIR,
               clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
      ExpectedResult(cells=680, cells_with_inclusions=421, tolerance=0.3)
@@ -54,7 +54,7 @@ class ExpectedResult():
     ),
 ])
 def test_create_mask(input, expected):
-    ans = main(input)
+    ans = main_with_args(input)
 
     # assert( abs(ans["cells_after_clipping"] - expected.cells) < expected.tolerance*expected.cells )
     # assert (abs(ans["cells_with_inclusions"] - expected.cells_with_inclusions) < expected.tolerance * expected.cells_with_inclusions)
