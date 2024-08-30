@@ -34,10 +34,11 @@ class SpotFinder(object):
         return self._image
 
 
-    def run(self, clip_values: tuple[float, float]=(5.0, 90), red_threshold: int=0, pixel_cycles: int=12) -> np.ndarray:
+    def run(self, clip_values: tuple[float, float]=(5.0, 90), red_threshold: int=0, pixel_cycles: int=12,
+            dead_cell_threshold: int = 70) -> np.ndarray:
         self.create_cell_mask(clip_values=clip_values)
         # self.remove_empty_cells()
-        self.remove_dead_cells_by_size(threshold=70) #70
+        self.remove_dead_cells_by_size(threshold=dead_cell_threshold) #70
         self.remove_empty_cells(within_pixels=pixel_cycles, red_threshold=red_threshold)
         return self.mask
 
@@ -113,6 +114,7 @@ class SpotFinder(object):
                 y[...] = ans
             self.mask = it.operands[1]
             self.results['cells_with_inclusions'] = int(len(np.unique(self.mask)))
+            self.results['ratio'] = float(self.results['cells_with_inclusions']) / float(self.results['cells_after_clipping'])
             return self.mask
 
     def remove_dead_cells_by_size(self, threshold: int = 100) -> np.ndarray:

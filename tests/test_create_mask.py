@@ -19,6 +19,7 @@ class TestArgs():
     clip_to: tuple[float, float]
     red_threshold: int
     pixel_cycles: int
+    dead_cells: int
 
 @dataclass
 class ExpectedResult():
@@ -33,23 +34,23 @@ class ExpectedResult():
 
 @pytest.mark.parametrize( 'input,expected', [
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_001.tif", output_folder=LOCAL_RESOURCES_DIR,
-              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
+              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES, dead_cells=70),
      ExpectedResult(cells=459, cells_with_inclusions=144, tolerance=0.1)
-    )  # passing
+    ),  # passing
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_002.tif", output_folder=LOCAL_RESOURCES_DIR,
-              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
+              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES, dead_cells=70),
      ExpectedResult(cells=680, cells_with_inclusions=421, tolerance=0.3)
     ),  # failing
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_003.tif", output_folder=LOCAL_RESOURCES_DIR,
-              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
+              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES, dead_cells=70),
      ExpectedResult(cells=600, cells_with_inclusions=451, tolerance=0.1)
     ),
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_004.tif", output_folder=LOCAL_RESOURCES_DIR,
-              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
+              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES, dead_cells=70),
      ExpectedResult(cells=502, cells_with_inclusions=231, tolerance=0.1)
     ),  # passing
     (TestArgs(filename=LOCAL_RESOURCES_DIR / "cell_image_005.tif", output_folder=LOCAL_RESOURCES_DIR,
-              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES),
+              clip_to=(CLIP_LOW, CLIP_HIGH), red_threshold=RED_THRESH, pixel_cycles=CYCLES, dead_cells=70),
      ExpectedResult(cells=512, cells_with_inclusions=212, tolerance=0.3)
     ),
 ])
