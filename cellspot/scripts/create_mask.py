@@ -1,3 +1,5 @@
+from lxml.parser import filename
+
 from cellspot.spot_finder import SpotFinder
 
 from pathlib import Path
@@ -24,6 +26,8 @@ def main_with_args(namespace_args):
                   red_threshold=namespace_args.red_threshold,
                   pixel_cycles=namespace_args.pixel_cycles)
 
+    mask_out = (namespace_args.output_folder / (namespace_args.filename.name + '_mask'))
+    sf.write_mask(filename=mask_out)
     output = (namespace_args.output_folder / namespace_args.filename.name).with_suffix('.json')
     return sf.write_results(file_out=output)
 
