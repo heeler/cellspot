@@ -5,6 +5,7 @@ from cellpose import models
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import json
 
 
 class SpotFinder(object):
@@ -25,6 +26,7 @@ class SpotFinder(object):
         self.model = models.Cellpose(gpu=False, model_type='cyto3')
         self.mask = None
         self.keepers = None
+        self.results = {}
 
 
     @property
@@ -32,15 +34,15 @@ class SpotFinder(object):
         return self._image
 
 
-    def run(self) -> np.ndarray:
-        self.create_cell_mask()
+    def run(self, clip_values: tuple[float, float]=(5.0, 90), red_threshold: int=0, pixel_cycles: int=12) -> np.ndarray:
+        self.create_cell_mask(clip_values=clip_values)
         # self.remove_empty_cells()
-        self.remove_dead_cells_by_size(threshold=150)
-        self.remove_empty_cells(within_pixels=12)
+        self.remove_dead_cells_by_size(threshold=70) #70
+        self.remove_empty_cells(within_pixels=pixel_cycles, red_threshold=red_threshold)
         return self.mask
 
 
-    def create_cell_mask(self) -> np.ndarray:
+    def create_cell_mask(self, clip_values: tuple[float, float]) -> np.ndarray:
         """
         This launches CellPose and captures the outputs.
         The relevant output currently is the mask.
@@ -53,18 +55,18 @@ class SpotFinder(object):
         """
         masks, flows, styles, diams = self.model.eval(
             [self.image],
-            channels=[3, 3],
+            channels=[3, 3], # segment using only the blue channel as requested
             diameter=25.0,
             flow_threshold=4.0,
-            normalize={"lowhigh": [5.0, 90.0]}, # clipping the top 1.5 % to remove dead nuclei
+            normalize={"lowhigh": list(clip_values)},
             do_3D=False
         )
         mask = masks[0]
-        print(f"mask shape: {mask.shape}, mask.max: {np.max(mask)}")
         self.mask = mask
+        self.results['cells_by_cellpose'] = int(np.max(mask))
         return mask
 
-    def keep_intersection(self) -> np.ndarray:
+    def keep_intersection(self, red_threshold: int=0) -> np.ndarray:
         """
         This function creates a list of the mask integers which
         overlap a red pixel, aka an inclusion body.
@@ -76,21 +78,21 @@ class SpotFinder(object):
         keepers = []
         with np.nditer([self.image[:,:,0], self.mask]) as it:
             for i, m in it:
-                if i > 0 and m > 0:
+                if i > red_threshold and m > 0:
                     keepers.append(m)
         keepers = np.unique(keepers)
         self.keepers = keepers
         return keepers
 
-    def remove_empty_cells(self, within_pixels: int = 0) -> np.ndarray:
+    def remove_empty_cells(self, within_pixels: int = 0, red_threshold: int = 0) -> np.ndarray:
         if within_pixels <= 0:
-            return self._remove_empty_cells()
+            return self._remove_empty_cells(red_threshold=red_threshold)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         dilate = cv2.dilate(self.mask, kernel, iterations=within_pixels)
         self.mask = dilate
-        return self._remove_empty_cells() # cleanup where masks overlapped
+        return self._remove_empty_cells(red_threshold=red_threshold) # cleanup where masks overlapped
 
-    def _remove_empty_cells(self) -> np.ndarray:
+    def _remove_empty_cells(self, red_threshold: int) -> np.ndarray:
         """
         This function creates a new mask consisting of
         only those cell masks found by keep_intersection().
@@ -101,7 +103,7 @@ class SpotFinder(object):
         with inclusion bodies.
         """
         if self.keepers is None:
-            self.keep_intersection()
+            self.keep_intersection( red_threshold=red_threshold )
 
         with np.nditer([self.mask, None]) as it:
             for x, y in it:
@@ -110,6 +112,7 @@ class SpotFinder(object):
                     ans = x
                 y[...] = ans
             self.mask = it.operands[1]
+            self.results['cells_with_inclusions'] = int(len(np.unique(self.mask)))
             return self.mask
 
     def remove_dead_cells_by_size(self, threshold: int = 100) -> np.ndarray:
@@ -125,7 +128,9 @@ class SpotFinder(object):
                     ans = x
                 y[...] = ans
             self.mask = it.operands[1]
+            self.results['cells_after_clipping'] = int(len(np.unique(self.mask)))
             return self.mask
+
 
 
 
@@ -165,6 +170,11 @@ class SpotFinder(object):
                     data_by_index[y].append(x)
         data_by_index[0].append(0)
         return np.array([np.percentile(x, 98) for x in data_by_index])
+
+    def write_results(self, file_out:Path) -> dict:
+        with file_out.open('w') as out:
+            json.dump(self.results, out)
+        return self.results
 
     def write_mask(self, filename: Path) -> None:
         tifffile.imwrite(str(filename), self.mask)

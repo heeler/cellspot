@@ -15,6 +15,10 @@ cellpose = "^3.0.10"
 tifffile = "^2024.8.10"
 matplotlib = "^3.9.2"
 opencv-python = "^4.10.0.84"
+argparse = "^1.4.0"
+
+[tool.poetry.scripts]
+cell_spot = 'cellspot.scripts.create_mask:main'
 
 
 [build-system]
