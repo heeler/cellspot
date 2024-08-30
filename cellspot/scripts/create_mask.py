@@ -3,8 +3,18 @@ from cellspot.spot_finder import SpotFinder
 from pathlib import Path
 import argparse
 
+def main():
+    parser = argparse.ArgumentParser(description='find nuclei with associated inclusion bodies')
+    parser.add_argument('filename', action='store', type=Path)
+    parser.add_argument('-r', '--red_threshold', action='store', default=82, type=int)
+    parser.add_argument('-c', '--clip_to', action='store', default=(5.0, 90.0), type=tuple[float, float])
+    parser.add_argument('-o', '--output_folder', action='store', default=False, type=Path, required=True)
+    parser.add_argument('-p', '--pixel_cycles', action='store', default=6, type=int)
+    args = parser.parse_args()
+    main_with_args(args)
 
-def main(namespace_args):
+
+def main_with_args(namespace_args):
 
 
     sf = SpotFinder(
@@ -19,11 +29,4 @@ def main(namespace_args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='find nuclei with associated inclusion bodies')
-    parser.add_argument('filename', action='store', type=Path)
-    parser.add_argument('-r', '--red_threshold', action='store', default=82, type=int)
-    parser.add_argument('-c', '--clip_to', action='store', default=(5.0, 90.0), type=tuple[float, float])
-    parser.add_argument('-o', '--output_folder', action='store', default=False, type=Path, required=True)
-    parser.add_argument('-p', '--pixel_cycles', action='store', default=6, type=int)
-    args = parser.parse_args()
-    main(args)
+    main()
